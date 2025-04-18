@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Subscribe Now</title>
+  <script src="https://kit.fontawesome.com/2d46731d50.js" crossorigin="anonymous"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .subscribe-box {
+      background: #fff;
+      max-width: 500px;
+      margin: auto;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+
+    .subscribe-btn {
+      background-color: #00AEEF;
+      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .subscribe-btn:hover {
+      background-color: #0089c1;
+    }
+  </style>
+</head>
+<body>
+  <div class="subscribe-box">
+    <h2>Subscribe to Continue</h2>
+    <p>Unlock all features with a monthly plan.</p>
+
+    <div id="userInfo" style="margin: 10px 0; font-weight: bold;"></div>
+
+    <ul style="text-align: left; max-width: 400px; margin: auto;">
+      <li>✅ Full access to business insights</li>
+      <li>✅ Personalized dashboard</li>
+      <li>✅ Exclusive member content</li>
+    </ul>
+    <button id="payBtn" class="subscribe-btn">Subscribe Now - ₹500</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  
+    const firebaseConfig = {
+      apiKey: "AIzaSyBMS_OM7yPPvSNQTN1ad67qE947M3WQ7yM",
+      authDomain: "english-attendance-site.firebaseapp.com",
+      projectId: "english-attendance-site",
+    };
+  
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+  
+    const payBtn = document.getElementById("payBtn");
+    const userInfo = document.getElementById("userInfo");
+  
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        userInfo.innerText = `Logged in as: ${user.displayName || user.email}`;
+  
+        // 🔄 Check subscription from Firestore
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().subscribed) {
+          localStorage.setItem("subscribed", "true");
+          window.location.href = "home.html";
+          return;
+        }
+  
+        // 💾 Or check localStorage fallback
+        if (localStorage.getItem("subscribed") === "true") {
+          window.location.href = "home.html";
+          return;
+        }
+      } else {
+        userInfo.innerText = "⚠️ Please login to subscribe.";
+        payBtn.disabled = true;
+      }
+    });
+  
+    payBtn.addEventListener("click", async () => {
+      payBtn.disabled = true;
+      payBtn.textContent = "Subscribing...";
+  
+      const user = auth.currentUser;
+      if (!user) {
+        alert("⚠️ Please login first.");
+        payBtn.disabled = false;
+        payBtn.textContent = "Subscribe Now - ₹500";
+        return;
+      }
+  
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          subscribed: true,
+          subscriptionDate: serverTimestamp(),
+          razorpayPaymentId: "demo_test_payment"
+        });
+  
+        localStorage.setItem("subscribed", "true");
+        localStorage.setItem("subscriptionExpiry", Date.now() + 30 * 24 * 60 * 60 * 1000);
+  
+        alert("✅ Subscribed successfully! Redirecting to home page...");
+        window.location.href = "home.html";
+  
+      } catch (err) {
+        console.error("Subscription error:", err);
+        alert("❌ Something went wrong. Please try again.");
+        payBtn.disabled = false;
+        payBtn.textContent = "Subscribe Now - ₹500";
+      }
+    });
+  </script>  
+  
+</body>
+</html>

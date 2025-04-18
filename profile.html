@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+    }
+
+    header {
+      background-color: #111827;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    main {
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 25px;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-info {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .profile-info h2 {
+      font-size: 26px;
+      margin-bottom: 10px;
+      color: #1f2937;
+    }
+
+    .info-block {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+
+    .info-block span {
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .buttons {
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .buttons a,
+    .buttons button {
+      padding: 10px 16px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      flex: 1 1 10px;
+      max-width: 150px;
+    }
+
+    .buttons button:hover,
+    .buttons a:hover {
+      background-color: #1e40af;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><i class="fa-solid fa-user"></i> My Profile</h1>
+  </header>
+
+  <main>
+    <div class="profile-info">
+      <h2 id="userName">Loading...</h2>
+      <div class="info-block">📧 Email: <span id="userEmail">-</span></div>
+      <div class="info-block">💼 Subscription Status: <span id="subStatus">-</span></div>
+      <div class="info-block" id="subDateBlock" style="display: none;">📅 Subscribed On: <span id="subDate">-</span></div>
+    </div>
+
+    <div class="buttons">
+      <a href="home.html">⬅ Back to home</a>
+      <button id="logoutBtn">🚪 Logout</button>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBMS_OM7yPPvSNQTN1ad67qE947M3WQ7yM",
+      authDomain: "english-attendance-site.firebaseapp.com",
+      projectId: "english-attendance-site"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+    const subStatus = document.getElementById("subStatus");
+    const subDateBlock = document.getElementById("subDateBlock");
+    const subDate = document.getElementById("subDate");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        userName.textContent = user.displayName || "User";
+        userEmail.textContent = user.email;
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          const subscribed = data.subscribed || false;
+
+          subStatus.textContent = subscribed ? "Active ✅" : "Inactive ❌";
+
+          if (subscribed && data.subscriptionDate?.toDate) {
+            const subTime = data.subscriptionDate.toDate().toLocaleString();
+            subDate.textContent = subTime;
+            subDateBlock.style.display = "block";
+          }
+        } else {
+          subStatus.textContent = "Not Found ❗";
+        }
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      localStorage.clear();
+      alert("Logged out!");
+      window.location.href = "login.html";
+    });
+  </script>
+
+</body>
+</html>
