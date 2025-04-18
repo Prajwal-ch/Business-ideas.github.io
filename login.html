@@ -165,7 +165,7 @@
           localStorage.setItem("subscriptionExpiry", Date.now() + 3 * 60 * 1000); // 3-minute trial
           localStorage.setItem("loginTime", Date.now().toString());
 
-          window.location.href = "home.html";
+          window.location.href = "index.html";
         })
         .catch(error => handleAuthError(error));
     }
