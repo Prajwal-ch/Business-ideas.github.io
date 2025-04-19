@@ -82,13 +82,13 @@
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && userDoc.data().subscribed) {
           localStorage.setItem("subscribed", "true");
-          window.location.href = "home.html";
+          window.location.href = "index.html";
           return;
         }
   
         // 💾 Or check localStorage fallback
         if (localStorage.getItem("subscribed") === "true") {
-          window.location.href = "home.html";
+          window.location.href = "index.html";
           return;
         }
       } else {
